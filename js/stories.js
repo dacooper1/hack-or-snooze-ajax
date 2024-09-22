@@ -121,15 +121,15 @@ function displayFavoriteList() {
       $favoritedStories.append($story);
     }
   } else {
-    $favoritedStories.append("<h5>No favorites added!</h5>");
+    $favoritedStories.append("<b><h5>No favorites added!</h5></b>");
   }
   $favoritedStories.show();
 }
 
-async function toggleStoryFavorite(evt) {
+async function toggleStoryFavorite(e) {
   console.debug("toggleStoryFavorite");
 
-  const $t = $(evt.target);
+  const $t = $(e.target);
   const $closestLi = $t.closest("li");
   const storyId = $closestLi.attr("id");
   const story = storyList.stories.find(story => story.storyId === storyId);
@@ -159,7 +159,7 @@ function putUserStoriesOnPage(e) {
       $ownStories.append($story);
     }
   } else {
-    $ownStories.append("<b><h3> No stories added by user yet!</h3></b>");
+    $ownStories.append("<b><h5> No stories added by user yet!</h5></b>");
   }
   $ownStories.show();
 }
