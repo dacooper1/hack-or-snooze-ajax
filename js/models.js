@@ -222,18 +222,28 @@ class User {
     }
   }
 
+  /** method to add story to user's favourites locally and in the database */
   async addFavorite(story) {
-    this.favorites.push(story);
-    await this._addOrRemoveFavorite("add", story)
+    // Check if it's already a favorite
+    if (!this.isFavorite(story)) { 
+      // adds story to current user's favourites list
+      this.favorites.push(story);
+      // calls method to add story to databse  
+      await this._addOrRemoveFavorite("add", story);
+    }
   }
 
+  /** method to add story to user's favourites locally and in the database */
   async removeFavorite(story) {
-    this.favorites = this.favorites.filter(story => story.storyId !== story.storyId);
+    // filter's through user's favourites and created new array with stories that do not have the same storyID as the one selected to remove
+    this.favorites = this.favorites.filter(favouriteStory => favouriteStory.storyId !== story.storyId);
+    // called method to remove story from database
     await this._addOrRemoveFavorite("remove", story);
   }
 
   
   async _addOrRemoveFavorite(newState, story) {
+    // depending on the value of newState, will add or delete story from database by sending a "POST" or "DELETE" request
     const method = newState === "add" ? "POST" : "DELETE";
     const token = this.loginToken;
     await axios({
@@ -242,9 +252,11 @@ class User {
       data: { token },
     });
   }
-  isFavorite(story) {
-    return this.favorites.some(story => (story.storyId === story.storyId));
-  }
 
+  // check's to see if selected story is in the user's favourites list 
+  isFavorite(story) {
+    // loops though user's favourite stories, if one favourite storyId matches the storyId of the value passed into the function, the loop will end and return true.
+    return this.favorites.some(favouriteStory => (favouriteStory.storyId === story.storyId));
+  }
 
 }

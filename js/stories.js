@@ -6,8 +6,11 @@ let storyList;
 /** Get and show stories when site first loads. */
 
 async function getAndShowStoriesOnStart() {
+  // calls function to get list of stories from database
   storyList = await StoryList.getStories();
+  // once the value is returned, remove the "stories loading" message 
   $storiesLoadingMsg.remove();
+  // calls function that will loop through stories, generate HTML and put them on the homepage
   putStoriesOnPage();
 }
 
@@ -19,13 +22,15 @@ async function getAndShowStoriesOnStart() {
  */
 
 function generateStoryMarkup(story, showDeleteButton) {
-  // console.debug("generateStoryMarkup", story);
-
   const hostName = story.getHostName();
+  // will display star (representing favourites) if user is logged in
   let showStar;
   if (currentUser){
     showStar = true;
+  } else {
+    showStar = false;
   }
+  // html markup for newly submitted story 
   return $(`
       <li id="${story.storyId}">
       ${showDeleteButton ? DeleteBtnHTML() : ""}
@@ -40,19 +45,17 @@ function generateStoryMarkup(story, showDeleteButton) {
     `);
 }
 
+// renders HTML for star (favourites) icon
 function starHTML(story, user){
   let isFavourite = user.isFavorite(story)
-  let star = ''
-  if (isFavourite) {
-    star = "fas"
-  } else {
-    star = "far"
-  };
+  // if story is favourited by user, star will be solid else star will be outlined
+  let star = isFavourite ? "fas" : "far";
   return ` <span class="star">
   <i class="${star} fa-star"></i>
   </span>`;
 }
 
+// renders HTML for trashcan (delete button)
 function DeleteBtnHTML() {
   return `
       <span class="trash-can">
@@ -70,36 +73,46 @@ async function submitNewStory(e) {
   const username = currentUser.username
   const storyData = { title, url, author, username };
 
+  // add new story inistance to database 
   const story = await storyList.addStory(currentUser, storyData);
 
+  // calls function to generate story markup with values provided by user
   const $story = generateStoryMarkup(story);
+
+  // add new story to the top of the homepage list 
   $allStoriesList.prepend($story);
+
   // hide the form and reset it
   $submitForm.slideUp("slow");
-  console.log($submitForm[0])
   $submitForm[0].reset();
 }
 
+// event listener on submit form
 $submitForm.on("submit", submitNewStory);
 
 async function deleteStoryFromPage(e) {
-
+  // deletes story associated with trashcan icon by selecting the closest li
   const $closestLi = $(e.target).closest("li");
+
   const storyId = $closestLi.attr("id");
 
+  //removes deleted story from database 
   await storyList.removeStory(currentUser, storyId);
 
-  // re-generate story list
+  // re-generates user story list
   await putUserStoriesOnPage();
+
+  // re-generates homepage story list 
+  await putStoriesOnPage();
 }
 
+// event listener to trash can icon, when clicked, will call deleteStoryFromPage to delete the story
 $ownStories.on("click", ".trash-can", deleteStoryFromPage);
 
 /** Gets list of stories from server, generates their HTML, and puts on page. */
 
 function putStoriesOnPage() {
-  console.debug("putStoriesOnPage");
-
+  // clears all stories under $allStoriesList ol
   $allStoriesList.empty();
 
   // loop through all of our stories and generate HTML for them
@@ -108,56 +121,67 @@ function putStoriesOnPage() {
     $allStoriesList.append($story);
   }
 
+  // generates updated story list 
   $allStoriesList.show();
 }
 
+// HTML markup for favourited stories 
 function displayFavoriteList() {
-
+  // clears all stories under $favoritedStories ol
   $favoritedStories.empty();
 
+  // checks ig currentUser has favourites
   if (currentUser.favorites.length != 0) {
+    // loops through current user's favourite stories, calls function to generate HTML and appends story to $favoritedStories ol
     for (let story of currentUser.favorites) {
       const $story = generateStoryMarkup(story);
       $favoritedStories.append($story);
     }
+    // if currrent user does not have any favourites, display the following message
   } else {
     $favoritedStories.append("<b><h5>No favorites added!</h5></b>");
   }
   $favoritedStories.show();
 }
 
+// fucntion to toggle favourites (star icon) + add/remove from User's favourite list in database
 async function toggleStoryFavorite(e) {
-  console.debug("toggleStoryFavorite");
-
   const $t = $(e.target);
   const $closestLi = $t.closest("li");
   const storyId = $closestLi.attr("id");
+
+  // loops though stories in database and select the story that has the same ID as the $closestLi to the target(star icon)
   const story = storyList.stories.find(story => story.storyId === storyId);
 
   // see if the item is already favorited (checking by presence of star)
   if ($t.hasClass("fas")) {
-    // currently a favorite: remove from user's fav list and change star
+    // currently a favorite: remove from user's fav list and change star to outtline
     await currentUser.removeFavorite(story);
     $t.closest("i").toggleClass("fas far");
   } else {
-    // currently not a favorite: do the opposite
+    // currently not a favorite: add to user's fav lisr and change star to solid
     await currentUser.addFavorite(story);
     $t.closest("i").toggleClass("fas far");
   }
 }
 
+// event listener for the star icon on all stories li (homepage stories, favourites stories and user's stories), calls toggle fuction to favourite/unfavourite stories
 $combinedStoryLists.on("click", ".star", toggleStoryFavorite);
 
+/** Gets list of current user's stories from server, generates their HTML, and puts on page. */
 function putUserStoriesOnPage(e) {
-  // console.debug("putUserStoriesOnPage",e);
-
+  // clears all stories under $ownStories ol
   $ownStories.empty();
-
+  
+  // checks to see if currentUser has stories
   if (currentUser.ownStories.length != 0) {
+    // loops through current user's story and genertes HTML with star icon (since user is logged in)
     for (let story of currentUser.ownStories) {
       let $story = generateStoryMarkup(story, true);
+      // appends user story as li under ownStories' ol
       $ownStories.append($story);
     }
+  // if the current user does not have any stories, display the following message
   } else {
     $ownStories.append("<b><h5> No stories added by user yet!</h5></b>");
   }

@@ -19,7 +19,13 @@ async function login(evt) {
 
   // User.login retrieves user info from API and returns User instance
   // which we'll make the globally-available, logged-in user.
-  currentUser = await User.login(username, password);
+  try {
+    currentUser = await User.login(username, password);
+  } catch(e) {
+    console.error(e)
+    window.alert("Unable to login, please check credentials")
+  }
+  
 
   $loginForm.trigger("reset");
 
@@ -78,8 +84,9 @@ async function checkForRememberedUser() {
   const username = localStorage.getItem("username");
   if (!token || !username) return false;
 
-  // try to log in with these credentials (will be null if login failed)
-  currentUser = await User.loginViaStoredCredentials(token, username);
+    // try to log in with these credentials (will be null if login failed)
+    currentUser = await User.loginViaStoredCredentials(token, username);
+  
 }
 
 /** Sync current user information to localStorage.
@@ -111,6 +118,6 @@ function updateUIOnUserLogin() {
   console.debug("updateUIOnUserLogin");
   hidePageComponents();
   $allStoriesList.show();
-
   updateNavOnLogin();
+  displayFavoriteList();
 }
