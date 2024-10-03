@@ -103,7 +103,7 @@ async function deleteStoryFromPage(e) {
   await putUserStoriesOnPage();
 
   // re-generates homepage story list 
-  await putStoriesOnPage();
+  updateStoriesOnPage();
 }
 
 // event listener to trash can icon, when clicked, will call deleteStoryFromPage to delete the story
@@ -111,8 +111,7 @@ $ownStories.on("click", ".trash-can", deleteStoryFromPage);
 
 /** Gets list of stories from server, generates their HTML, and puts on page. */
 
-function putStoriesOnPage() {
-  // clears all stories under $allStoriesList ol
+function updateStoriesOnPage() {
   $allStoriesList.empty();
 
   // loop through all of our stories and generate HTML for them
@@ -120,14 +119,18 @@ function putStoriesOnPage() {
     const $story = generateStoryMarkup(story);
     $allStoriesList.append($story);
   }
+}
+
+function putStoriesOnPage() {
+  // clears all stories under $allStoriesList ol
+  updateStoriesOnPage();
 
   // generates updated story list 
   $allStoriesList.show();
+
 }
 
-// HTML markup for favourited stories 
-function displayFavoriteList() {
-  // clears all stories under $favoritedStories ol
+function updateFavoriteList() {
   $favoritedStories.empty();
 
   // checks ig currentUser has favourites
@@ -141,6 +144,12 @@ function displayFavoriteList() {
   } else {
     $favoritedStories.append("<b><h5>No favorites added!</h5></b>");
   }
+}
+
+// HTML markup for favourited stories 
+function displayFavoriteList() {
+  // clears all stories under $favoritedStories ol
+  updateFavoriteList();
   $favoritedStories.show();
 }
 
